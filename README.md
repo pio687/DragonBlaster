@@ -113,7 +113,7 @@ Building a vertical slice first - getting all core mechanics working with the ho
   - Ability switching during combat
 - **Enemy Types**
   - Smaller monsters accompanying kaiju
-  - 追跡 mobs that follow player between cities
+  - Mobs that follow player between cities
   - Varied behaviors and attack patterns
 
 ### Progression System
