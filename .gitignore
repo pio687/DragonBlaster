@@ -1,0 +1,6 @@
+*.p8.png
+backups/
+*.bak
+
+.DS_Store
+Thumbs.db
