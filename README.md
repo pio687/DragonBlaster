@@ -4,6 +4,8 @@ Pico-8 Game
 
 A Pico-8 city defense game where you pilot a flying ship from your mountain base, discovering cities across the world and defending them from massive kaiju bosses and their accompanying monsters.
 
+Current build found at https://pio687.github.io/DragonBlaster/dragon.html
+
 ## Concept
 
 Explore a tile-based world map, discovering cities marked in white. When you approach, they turn green and become active defense zones. Kaiju emerge from different biomes to attack these cities - water dragons, mountain beasts, desert creatures, and more. Position your ship to intercept attacks, manage your shields and health, and defeat the kaiju before the cities are destroyed. Between cities, face smaller enemies and mobs that follow you to your next destination. Collect city bonuses to prepare for the final boss battle.
@@ -28,9 +30,11 @@ Building a vertical slice first - getting all core mechanics working with the ho
 - City on map
 - Health bar display (100 HP - visual only)
 - Movement speed boost over water
+- Collision detection for sprite and map tile
+- Health loss
 
 ### In Development
-- Collision detection
+- Enemy attacks
 - Shooting mechanics
 - Shield system
 - Damage systems
