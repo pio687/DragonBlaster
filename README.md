@@ -32,22 +32,32 @@ Building a vertical slice first - getting all core mechanics working with the ho
 - Movement speed boost over water
 - Collision detection for sprite and map tile
 - Health loss
+- Enemy spawn when tile flown over
+- Camera scrolling
+- Health stops at zero
+- Change sprite upon player death
 
 ### In Development
-- Enemy attacks
-- Shooting mechanics
-- Shield system
-- Damage systems
-- City state changes
+- Player shooting
+- Enemy shooting
+- Map wrapping
+- Enemy health
+- Enemy death
+- Radius-based enemy spawn indicator (!!)
+- Enemy spawn warning (camera shake)
+- Powerup Pickup
+- Mountain lair
 
-## Vertical Slice Goals (First Playable)
+
+## Tentative Vertical Slice Goals (First Playable)
 
 ### Core Movement & Physics
 - [ ] Steady movement speed across land
-- [ ] Enhanced movement speed over water
+- [ ] Enhanced movement speed over water (with powerup)
 - [ ] Inertia system
 - [ ] Shadow effects under ship
-- [ ] Smooth map scrolling in city combat areas
+- [ ] Smooth map scrolling
+- [ ] Wrap around map
 
 ### Combat System
 - [ ] X button: Continuous shooting while held
@@ -66,7 +76,7 @@ Building a vertical slice first - getting all core mechanics working with the ho
 
 ### Kaiju (Water Dragon)
 - [ ] 100 health points
-- [ ] Spawns in water one diagonal screen away from city
+- [ ] Triggered spawn
 - [ ] Mini health bar display
 - [ ] Movement pattern: stays in water, moves toward city
 - [ ] Attack cycle: 10 seconds movement → 5 seconds shooting → repeat
@@ -87,25 +97,24 @@ Building a vertical slice first - getting all core mechanics working with the ho
 - [ ] Bonus reward: Water speed boost (for defeating Water Dragon with city intact)
 
 ### Home Base (Mountain)
-- [ ] Player respawn point
-- [ ] Continue from previous state (kaiju health, city status maintained)
-- [ ] Time pressure: race back to save city after respawn
+- [ ] Player base
+- [ ] Continue from previous state (kaiju health, city status maintained
 
 ### Audio
 - [ ] Basic sound effects
 - [ ] Basic background music
 
 ### Win/Lose Conditions
-- [ ] Victory: Defeat kaiju before city destroyed
-- [ ] Partial victory: Defeat kaiju but city damaged (reduced/no bonuses)
-- [ ] Defeat: Player reaches 0 health → respawn at mountain
+- [ ] Victory: Defeat all kaiju, all cities remain
+- [ ] Partial victory: Defeat kaiju, at least one city remains
+- [ ] Defeat: All cities destroyed during ghost phase?
 - [ ] City destruction: Lose potential bonuses (can still progress)
 
 ## Post-Vertical Slice Features
 
 ### World Expansion
 - **Multiple Cities** - Discover and defend cities across different regions
-- **Expanded World Map** - Archipelago region and beyond
+- **Expanded World Map** - Archipelago, continent, cities
 - **Hyperspeed Travel** - Fly in straight line for >1 screen distance, only in specific corridors
 - **Multiple Biomes** - Each with unique visual style and challenges
 
