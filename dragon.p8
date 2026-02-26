@@ -3,18 +3,30 @@ version 43
 __lua__
 function _init()
 
-state="start"
+state="start" // start menu
+
+mode="peace" // set battle mode
+
+location="ocean" // set map area
+
+death_sound_played = false // play upon player death
+
+hit_cooldown = 0 // enemy hit cooldown
+
+death = false
+
+music(0,0,0,3)
 
 -- player class --
 	player={
 		x=63, 
 		y=63,
+		player_alive=0,
 		fx=false, // flip
 		fy=false, 
 		sp=1,
 		ghost=4,
 		speed=1,
-		alive=1
 		}
 		
 		bomb={
@@ -45,72 +57,112 @@ state="start"
 end // init
 
 
+-----------------------
+--	update starts here--
+-----------------------
+
+
 function _update()
-//runs before it draws
-//every frame
+
+    old_state = state
 
 	if state=="play" then
-		if (btnp(❎)) state="menu" //call menu
-
-//save player position
-	old_x=player.x
-	old_y=player.y
+	
+    	if health <= 0
+	        and not death_sound_played
+	        then health = 0
+	        death = true
+	        sfx(9,2)
+	        death_sound_played=true
+	    end
+	    
+	    if death == true
+	    	then mode = "death"
+	    	set_music()
+	    end
+	
+	    old_speed = player.speed
+	
+	    if (btnp(❎)) 
+            then state="menu" //call menu
+        end
+    
+        --save player position
+	   			 old_x=player.x
+        old_y=player.y
 	
 
-	           
-//health ui
-  update_health()
+        --health ui
+        update_health()
 
-//player movement
-		update_player()
+        --player movement
+	    update_player()
 		
---//check collision
---	if check_collision(city1, 16, 16) then
---		player.x = old_x
---		player.y = old_y
---	end
---	
+        if hit_cooldown > 0 then
+	        hit_cooldown -= 1
+        end
 
---//check injury
-	if check_collision(axo, 8, 8) then
-		health -= 1
-	end	
+	    --spawn axo
+	    if axo.spawn==0 then
+	        if position==57 then
+		        axo.spawn=1
+		        mode="war"
+		        sfx(3,2)
+		        set_music()
+	        end
+	    end
+
+    --//check injury
+	 if axo.spawn==1  and death==false then 
+	  if check_collision(axo, 8, 8)
+	   and hit_cooldown == 0 then
+		  health -= 50 -- keep high		        
+    sfx(7,2)
+		  hit_cooldown = 5
+		
+		 if player.x > axo.x
+		  then player.x=old_x+5
+		  else
+		  player.x=old_x-5
+		 end
+		
+		 if player.y > axo.y
+		  then player.y=old_y+5
+		  else
+		  player.y=old_y-5
+		 end
+		end	
+ end
 	
-	//spawn axo
-	if position==57 then
-		axo.spawn=1
-	end
+        --flash bomb and axo sprites
+	flash_sprite(axo, 36, 37, 10)
 		
-//flash bomb and axo sprites
-		flash_sprite(axo, 36, 37, 10)
+	flash_sprite(bomb, 50, 51, 2)
 		
-		flash_sprite(bomb, 50, 51, 2)
-		
-//find player position
+        --find player position
 	position=(mget(flr((player.x+4)/8),flr((player.y+4)/8)))
 
-//go fast over water
+        --go fast over water
 	if position==41 or position==42 or position==57 
-	 then
-		player.speed=2
-	else
-		player.speed=1
+	 then player.speed=2
+  else player.speed=1
 	end
 	
-	if fget(position, 0) then
+ if fget(position, 0) then
 		player.x = old_x
 		player.y = old_y
 	end
 
-//print position
-
-		
-		elseif state=="start" or state=="menu" then
-			if (btnp(❎)) state="play"
-		end
-
+	elseif state=="start" or state=="menu" then
+		if (btnp(❎)) then state="play"
+  end
+ end
+	
 end
 
+
+--draw starts here--
+--------------------
 
 function _draw()
 
@@ -121,55 +173,48 @@ function _draw()
 
 	if state=="play" then
 
-	cls() // clear screen
+		cls() // clear screen
 	
-	draw_map() // call draw_map from tab 3
+		draw_map() // call draw_map from tab 3
  
-// camera(player.x/8,player.y/8)
+		// camera(player.x/8,player.y/8)
     
-	draw_health() // call draw_health from tab 2
+		draw_health() // call draw_health from tab 2
 	
-	spr(city1.cityspr, city1.x, city1.y, 2, 2) // city sprite
+		spr(city1.cityspr, city1.x, city1.y, 2, 2) // city sprite
 	
-	if axo.spawn==1 then
-		spr(axo.sp,axo.x,axo.y,1,1,true,false) //axo monster
-	end
-	
-	if player.alive == 1 then
-	spr(player.sp,player.x,player.y,1,1,player.f,player.fx,player.fy)
-	// num, x, y, width, flip
-	end
-	
-	if health <= 0 then
-		health = 0
-		player.alive = 0
+		if axo.spawn==1 then
+			spr(axo.sp,axo.x,axo.y,1,1,true,false) //axo monster
 		end
 	
-	if player.alive == 0 then
+		if death == false then
+			spr(player.sp,player.x,player.y,1,1,player.fx,player.fy)
+			// num, x, y, width, flip
+		end
 	
-		spr(player.ghost,player.x,player.y,2,2,player.f,player.fx,player.fy)
-
-
-	end
 	
-	print(position,mapx,mapy)
-	print(health,mapx+10,mapy+10)
+		if death == true then
+	
+			spr(player.ghost,player.x,player.y,2,2,player.fx,player.fy)
 
+		end
+	
+		print(position,mapx,mapy)
+		print(health,mapx,mapy+10)
+		print(mode,mapx,mapy+20)
+		print(location,mapx,mapy+30)
+	
 	
 	elseif state=="start" then
-	cls(19)
-	print("time to wake up.", 30,60)
-	
-	elseif state=="menu" then
-	cls(19)
-	print("time to get moving.",28,60)
+		cls(19)
+		print("time to wake up.", 30,60)
+		
+		elseif state=="menu" then
+		cls(19)
+		print("time to get moving.",28,60)
 	
 	end
 	
-	
-	
-
-	 
 end
 -->8
 function init_health()
@@ -186,8 +231,7 @@ function draw_health()
 	else
 	rrectfill((mapx+30),(mapy+2),0,8,2,14)
 	end
-	
-	print(health)
+
 	end
 -->8
 function flash_sprite(obj, start_sp, end_sp, speed)
@@ -216,27 +260,26 @@ function update_player()
 
  if btn(➡️) then
   player.x+=player.speed
-  player.f=true
+  player.fx=true
   player.sp=1 // which sprite
  end // move right
 
 	if btn(⬅️) then
 		player.x-=player.speed
-		player.f=false
-		player.sp=1 //which sprite
+		player.fx=false
+	 player.sp=1//which sprite
 	end // mobe left
 
  if btn(⬇️) then
   player.y+=player.speed
   player.sp=3
-  player.fy=true
+  player.fy=false
  end // move up
 
 	if btn(⬆️) then
 		player.y-=player.speed
 		player.sp=2
 		player.fy=false
-		
 	end // move down
 
 end
@@ -260,6 +303,31 @@ function draw_map()
 	mapy=flr(player.y)-63
 	camera(mapx,mapy)
 	map(0,0,0,0,128,64)
+	
+end
+-->8
+function set_music()
+
+	local new_music = -1
+			
+		if mode == "peace" 
+		 and location == "ocean" 
+		 then new_music = 0 
+	
+		elseif mode == "war" 
+ 		and location == "ocean" 
+		 then new_music = 1 
+		 
+		elseif mode == "death"
+			then new_music = 2
+	
+		end
+		
+		
+	if new_music ~= current_music
+	 then music(new_music, 0, 3)
+	 current_music = new_music
+	end
 	
 end
 __gfx__
@@ -428,8 +496,19 @@ __map__
 2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828
 2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828282828
 __sfx__
-00010000000002405022050210502105024050280502c0502e0502f050300503005030050300502f0502b0502905024050210501f0501b0501905018050180501805019050000000000000000000000000000000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00100000000000000000000280502a0502d0502715028150291502b1502c1502e1502f15031150321503315033150331503315032150311502f1502d1502c1502a1502a1502a1500000000000000000000000000
+a0160020156101361012610136101461017610196101c6101d6101e6101d6101a61018610166101361013610146101561017610196101d6101f6102061021610216101f6101e6101b61019610176101661016610
+a40100002255023550235502355023550235502255021550205501f5501e5501c5501c5501b5501a5501a5501a5501a5501a5501a5501b5501c5501d5501e5501f5502055022550245502555026550285502a550
+300200200c3400c3400c3400c3400c3400d3400e3400f34011340133401435015350163501735018350193501a3501a3501a3501a3501a3501935018350173501635014350133401134010340103401034010340
+36020000011500115002150041500515007150081500a1500c1500d1500f1501115012150141501515016150161501715017150161501415013150111500d1500c15009150081500615004150031500215001150
+000e00200031001310013100131001310013100131001310133101731014310173101531017310153101231003310033100331003310033100331004310043101b31018310193101531017310153101731014310
+00100010234531f4531c453244531d4531c453264531d4531b453274531e4531b453254531b4531e453224530f403124031240314403164030c4030e40310403114031340315403184031a4031c4031d40321403
+310200201301612016110161101610016100160f0160e0160d0160c0160c0160b0160b0160b0160b0160a0160a0160a0160a0160a0160a0160a0160a0160a0160a0160b0160b0160c0160d0160e0160f01612016
+0001000000b0031b5032b5032b5032b5031b5031b5030b5030b5030b502fb502fb502fb502eb502db502bb502bb5029b5028b5024b5022b5020b501eb501ab5018b5016b5015b5013b5013b5012b5011b5010b50
+d240001019334193341c3341c3341933419334163341633418334183341b3341b3341833418334153341533415304183040d3040c3040b3040c3040c3040c3040b3040a304083040630405304043040330402304
+0e0300001e63023640286402b6502e650316603266033660316502d6402864026640216301d650196501665013650106500e6500c65009650076500565003650026500165000650006502d600286002660025600
+__music__
+02 004b4844
+03 04424344
+03 08464344
+00 02424344
+

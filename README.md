@@ -36,6 +36,11 @@ Building a vertical slice first - getting all core mechanics working with the ho
 - Camera scrolling
 - Health stops at zero
 - Change sprite upon player death
+- Starting sound, battle music, death music
+- Collision bounceback on enemy
+- Death sound
+- No collision during death state
+-
 
 ### In Development
 - Player shooting
