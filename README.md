@@ -40,14 +40,21 @@ Building a vertical slice first - getting all core mechanics working with the ho
 - Collision bounceback on enemy
 - Death sound
 - No collision during death state
--
+- Map wraps around
+- Fire bullets upon button press
+- Bullets delete when too far or off screen
+- Bullet collision with enemy
+- Enemy collision function
+- Flashing sprite with pallet swap
+- Enemy health, health loss, death
 
 ### In Development
-- Player shooting
 - Enemy shooting
-- Map wrapping
-- Enemy health
-- Enemy death
+- Enemy attack collision detection
+- Enemy death sprite
+- Powerup upon enemy death
+
+### Next up
 - Radius-based enemy spawn indicator (!!)
 - Enemy spawn warning (camera shake)
 - Powerup Pickup
