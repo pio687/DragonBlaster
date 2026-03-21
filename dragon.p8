@@ -1,50 +1,77 @@
 pico-8 cartridge // http://www.pico-8.com
 version 43
 __lua__
+//0: init
+//❎
+//❎
+
 function _init()
 
-state="start" // start menu
+	defaults={
+		friction=0.75,
+		boost=5,
+		max_dy=3,
+		max_dx=1,
+		acc=0.5
+	}
 
-mode="peace" // set battle mode
+	state="start"
 
-location="ocean" // set map area
+	mode="peace"
 
-death_sound_played = false // play upon player death
+	location="ocean"
 
-hit_cooldown = 0 // enemy hit cooldown
+	death_sound_played = false
 
-bullet_cooldown = 0
+	hit_cooldown = 0
 
-death = false
+	bullet_cooldown = 0
 
+	death = false
 
-music(0,0,0,3)
+	music(0,0,0,3)
 
--- player class --
+//player ❎❎❎
+
 	player={
 		x=63, 
 		y=63,
+		oldx=0,
+		oldy=0,
+		dx=0,
+		dy=0,
+		w=8,
+		h=8,
+		max_dx=0,
+		max_dy=0,
+		acc=0.5,
+		moving=false,
+		drifting=false,
+		friction = 0.75,
 		player_alive=0,
-		fx=false, // flip
+		position=0,
+		fx=false,
 		fy=false, 
 		sp=1,
 		ghost=4,
-		speed=1,
-		pow=100
+		pow=100,
+		dam=25
 		}
 		
+		//❎
 		bullets = {}
 		
-		--bullet class--
+		//❎
 		bul={
 		x=player.x,
 		y=player.y,
-		sp=16,
+		sp=player25,
 		pow=20,
 		speed=3
 		}
---bomb class--
 		
+		
+		//❎
 		bomb={
 		sp=50,
 		x=player.x,
@@ -53,40 +80,109 @@ music(0,0,0,3)
 		flash=10,
 		spawn=0
 		}
+	
 		
---axo class--
-
-		axo={
-		sp=36,
-		x=8*8,
-		y=12*8,
-		flash_timer=10,
-		spawn=0,
-		alive=1,
-		health=100,
-		pow=25
-		}
-		
---city1 class--		
+		//❎	
 		city1={
 		cityspr=6,
 		x=12*8,
 		y=8*8
 		}
+
+		//x
+		enemies={}
 		
+
 	init_health()
 
-end // init
+	axo_init()
 
------------------------
---	update starts here--
------------------------
 
+	//map limits
+	map_start=0
+	map_end=1024
+	map_height=512
+
+end
+
+//end init
+//❎
+//❎
+-->8
+//1: draw
+//❎
+//❎
+
+function _draw()
+
+
+	//World map
+
+	if state=="play" then
+
+		cls() // clear screen
+		draw_map() // call draw_map from tab 3
+
+	//bullets
+
+		for b in all(bullets) do
+			spr(b.sp, b.x, b.y)
+		end
+		
+	//city
+		spr(city1.cityspr, city1.x, city1.y, 2, 2) // city sprite
+	
+	//ghost
+	
+		if death == false then
+			spr(player.sp,player.x,player.y,1,1,player.fx,player.fy)
+			// num, x, y, width, flip
+		end
+	
+		if death == true then
+	
+			spr(player.ghost,player.x,player.y,2,2,player.fx,player.fy)
+
+		end
+	
+		//axo boss sprite
+
+		axo_behavior()
+
+		//health bar
+		draw_health() // call draw_health from tab 2
+
+		//debugging coordinates
+	
+	//start and menu
+	elseif state=="start" then
+		cls(19)
+		print("time to wake up.", 30,60)
+		
+		elseif state=="menu" then
+		cls(19)
+		print("time to get moving.",28,60)
+	
+
+	end
+
+//points(axo.e.sp, 5, 5, count, total)
+
+
+end // end draw
+
+
+//end draw
+//❎
+//❎❎
+-->8
+//2: update
+//❎
+//❎❎
 
 function _update()
 
 	old_state = state
-
 	if state=="play" then
 		if health <= 0
 			and not death_sound_played
@@ -100,134 +196,68 @@ function _update()
 	 	then mode = "death"
 	  set_music()
 	 end
-	 
-		old_speed = player.speed
 	
 	   if (btnp(4)) 
  	   then state="menu" //call menu
     end
    
-		--save player position
-		old_x=player.x
-		old_y=player.y
-		--health ui
-		update_health()
-		--player movement
-		update_player()
-		--bullets
-		bullet_fire()
-		update_bullets()
-		--hit cooldown
-		if hit_cooldown > 0 then
-			hit_cooldown -= 1
-		end
-		--bullet cooldown
-		if bullet_cooldown > 0 then
-			bullet_cooldown -= 1
-		end
+	update_health()
+
+	player.oldx=player.x
+	player.oldy=player.y
+
+	update_player()
+	
+	bullet_fire()
+	update_bullets()
+
+	if hit_cooldown > 0 then
+		hit_cooldown -= 1
+	end
+	
+	if bullet_cooldown > 0 then
+		bullet_cooldown -= 1
+	end
 
 	map_flip()
 	
-	bad_coll(axo, 8, 8, axo.pow, player.pow, 7)
-	if axo.spawn == 1 then
-		bullhit(axo)
+	bad_col()
+	bullhit()
+
+	axo_spawn()
+
+
+for e in all(enemies) do
+
+	if e.flash_timer > 0 then
+		e.flash_timer -= 1
 	end
 
-			if axo.flash_timer > 0 then
-				axo.flash_timer -= 1
-			end
+	if e.health<= 0
+		and e.alive then			
+		sfx(e.deathsfx,2)
+		e.alive=false
+		mode="peace"
+		set_music()
+	end
+end
 			
-        --find player position
-	position=(mget(flr((player.x+4)/8),flr((player.y+4)/8)))
-
-        --go fast over water
-	if position==41 or position==42 or position==57 
-	 then player.speed=2
-  else player.speed=1
-	end
-	
- if fget(position, 0) then
-		player.x = old_x
-		player.y = old_y
-	end
 
 	elseif state=="start" or state=="menu" then
 		if (btnp(❎)) then state="play"
   end
  end
-	
-
-	
 end
 
+//end update
+//❎❎
+//❎❎❎
 
---draw starts here--
---------------------
-
-function _draw()
-
-//draws sprites
-//do things on screen
-//based on math that
-//happens in update
-
-	if state=="play" then
-
-		cls() // clear screen
-	
-		draw_map() // call draw_map from tab 3
- 
-		// camera(player.x/8,player.y/8)
-    
-		for b in all(bullets) do
-			spr(b.sp, b.x, b.y)
-		end
-		
-	
-		spr(city1.cityspr, city1.x, city1.y, 2, 2) // city sprite
-	
-
-	
-		if death == false then
-			spr(player.sp,player.x,player.y,1,1,player.fx,player.fy)
-			// num, x, y, width, flip
-		end
-	
-	
-		if death == true then
-	
-			spr(player.ghost,player.x,player.y,2,2,player.fx,player.fy)
-
-		end
-	
-		--spawn axo
-		axo_spawn()
-		
-				draw_health() // call draw_health from tab 2
-
-	
-		print(position,mapx,mapy)
-		print(health,mapx,mapy+10)
-		print(mode,mapx,mapy+20)
-		print(location,mapx,mapy+30)
-		print(player.x,mapx,mapy+40)
-		print(player.y,mapx,mapy+50)
-		print(axo.alive,mapx,mapy+60)
-	
-	
-	elseif state=="start" then
-		cls(19)
-		print("time to wake up.", 30,60)
-		
-		elseif state=="menu" then
-		cls(19)
-		print("time to get moving.",28,60)
-	
-
-	end
-	
-end
 -->8
+//3: health and powerups
+//❎❎
+//❎❎❎
+
 function init_health()
 	health=100
 end
@@ -242,203 +272,24 @@ function draw_health()
 	else
 	rrectfill((mapx+30),(mapy+2),0,8,2,14)
 	end
+end
 
-	end
+//end health
+//❎❎❎
+//❎❎❎
 
+//3: powerups
+//❎❎❎
+//❎❎❎
+
+//end powerups
+//❎❎❎
+//❎❎❎❎
 -->8
-function flash_sprite(obj, start_sp, end_sp, speed)
-	if obj.flash_timer < speed then
-		obj.flash_timer += 1
-	else
-		if obj.sp < end_sp then
-			obj.sp += 1
-		else
-			obj.sp = start_sp
-		end
-		obj.flash_timer = 0
-	end
-end
+//4: music and map
+//❎❎❎
+//❎❎❎❎
 
-//function flash_bomb()
-	
-//	spr(bomb.sp,player.x,player.y,1,1) // explosion
-//	flash_sprite(bomb,50,51,2)
-//	bomb.timer -= 1
-//end
-
-
-// player movement
-function update_player()
-
- if btn(➡️) then
-  player.x+=player.speed
-  player.fx=true
-  player.sp=1 // which sprite
- end // move right
-
-	if btn(⬅️) then
-		player.x-=player.speed
-		player.fx=false
-	 player.sp=1//which sprite
-	end // mobe left
-
- if btn(⬇️) then
-  player.y+=player.speed
-  player.sp=3
-  player.fy=false
- end // move up
-
-	if btn(⬆️) then
-		player.y-=player.speed
-		player.sp=2
-		player.fy=false
-	end // move down
-
-end
-
-
-function check_collision(obj, obj_width, obj_height)
-	return
-		player.x < obj.x + obj_width and
-		player.x + 8 > obj.x and
-		player.y < obj.y + obj_height and
-		player.y + 8 > obj.y
-	end
-	
-	--bullet fire--
-	function bullet_fire()
-		if btnp(5) and bullet_cooldown==0 then
-			sfx(1,2)
-			player.pow-=5
-			bullet_cooldown=10
-			local new_bullet = {
-				x = player.x,
-				y = player.y,
-				sp = 16,
-				pow = player.pow/5
-				}
-		
-		--set direction of bullet--
-	if player.sp==1 and player.fx then
-				new_bullet.dx = bul.speed
-				new_bullet.dy = 0
-		elseif player.sp==1 and not player.fx then
-				new_bullet.dx = -bul.speed
-				new_bullet.dy = 0
-		elseif player.sp==2 then
-				new_bullet.dx = 0
-				new_bullet.dy = -bul.speed
-		elseif player.sp==3 then
-				new_bullet.dx = 0
-				new_bullet.dy = bul.speed
-			
-			end
-			
-			add(bullets, new_bullet)
-			
-			end
-		end
-		
-		function update_bullets()
-			for b in all(bullets) do
-				b.x += b.dx
-				b.y += b.dy
-				
-	if b.x < player.x-128
-		or b.x > player.x+128
-		or b.y < player.y-128
-		or b.y > player.y+128
-		or b.x < 0 or b.x > 1006
-		or b.y < 0 or b.y > 503 then
-		del(bullets,b)
-	end
-	
-	end
-		
-end
-
-
-function bad_coll(badd,width,height,baddam,plrdam,sfx_num)
-	if badd.spawn == 1 and death == false and badd.alive == 1 then
-	
-		if check_collision(badd, width, height)
-		and hit_cooldown == 0 then
-			
-			flash_sprite(badd,badd.sp, badd.sp+1, 10)
-			
-			health -= baddam
-			badd.health -= plrdam/10
-			
-			badd.flash_timer = 20
-			
-			sfx(sfx_num, 2)
-			
-			hit_cooldown = 10
-			
-			if player.x > badd.x
-				then player.x=old_x+5
-					else player.x=old_x-5
-			end
-		
-			if player.y > badd.y
-				then player.y=old_y+5
-					else player.y=old_y-5
-			end
-		end
-	end
-end
-
-function bullhit(badd)
-
-	for b in all(bullets) do
-	
-		if b.x < badd.x + 8 and
-			b.x + 8 > badd.x and
-			b.y < badd.y + 8 and
-			b.y + 8 > badd.y then
-			
-			badd.health -= b.pow
-			badd.flash_timer = 20
-			
-			sfx(3,3)
-			
-			del(bullets,b)
-			
-			end
-			
-		end
-	end
--->8
---map stuff--
-
-function draw_map()
-
-	mapx=flr(player.x)-63
-	mapy=flr(player.y)-63
-	camera(mapx,mapy)
-	map(0,0,0,0,128,64)
-	
-end
-
-		function map_flip()
-			if player.x<=0 then
-				player.x=1005
-			end
-		
-			if player.x>=1006 then
-				player.x=1
-			end
-			
-			if player.y==0 then
-				player.y=502
-			end
-			
-			if player.y==503 then
-				player.y=1
-			end
-			
-			end
--->8
 function set_music()
 
 	local new_music = -1
@@ -463,45 +314,458 @@ function set_music()
 	end
 	
 end
--->8
---draw function	
-	
-	function axo_spawn() 
- 
-	  if axo.spawn==0 
-	  	and axo.alive==1 then
-	      if position==57 then
-	       axo.spawn=1
-	       mode="war"
-	       sfx(3,2)
-	       set_music()
-	      end
-	  end
-	  
-		
-		if axo.spawn==1 and axo.alive==1 then
-			if axo.flash_timer > 0 then
-				if axo.flash_timer % 6 < 3 then
-				pal(8,10)
-				end
-			end
-			
-			spr(axo.sp,axo.x,axo.y,1,1,true,false) //axo monster
 
-			pal()
-		end
-	  
-	  if axo.health <= 0 and axo.alive==1 then
-	 		sfx(3,2)
-	  	axo.alive=0
-	  	mode="peace"
-	  	set_music()
-	  end
-	  
-	  
+//end music
+//❎❎❎❎
+//❎❎❎❎
+
+//4: map
+//❎❎❎❎
+//❎❎❎❎
+
+function draw_map()
+
+	mapx=flr(player.x)-63
+	mapy=flr(player.y)-63
+	camera(mapx,mapy)
+	map(0,0,0,0,128,64)
+	palt(0,true)
+	
+end
+
+function map_flip()
+	if player.x<=map_start then
+		player.x=map_end
+	end
+		
+	if player.x>=map_end then
+		player.x=map_start
+	end
+			
+	if player.y<=map_start then
+		player.y=map_height
 	end
 	
+	if player.y>=map_height then
+		player.y=map_start
+	end
+end
 
+//end map
+//❎❎❎❎
+//❎❎❎❎❎
+-->8
+//5: axolotl
+//❎❎❎❎❎
+//❎❎❎❎❎
+
+		//❎
+		axo={}
+
+function axo_init()
+	for tx=0,127 do
+		for ty=0,63 do
+			local t = mget(tx,ty)
+			if fget(t,4) then
+				local e = {	
+				sp=36,
+				h=8,
+				w=8,
+				x=tx*8,
+				y=ty*8,
+				flash_timer=10,
+				spawn=false,
+				alive=true,
+				health=100,
+				pow=25,
+				dam=25,
+				hurtsfx=7,
+				spawnsfx=3,
+				deathsfx=3,
+				palone=8,
+				paltwo=10
+				}
+				
+				add(axo, e)
+				add(enemies, e)
+			end
+		end
+	end
+end
+
+function axo_spawn()
+
+	for e in all(axo) do
+		if e.alive
+		and not e.spawn then
+			if abs(player.x - e.x) < 2 or
+			abs(player.y - e.y) < 2 then
+				e.spawn=true
+				mode="war"
+				sfx(e.spawnsfx,2)
+				set_music()
+			end
+		end
+	end
+end
+
+function axo_behavior()
+	for e in all(axo) do
+		if e.alive and e.spawn then
+			if e.flash_timer > 0
+				and e.flash_timer % 6 < 3 then
+					pal(8,10)
+			end
+			spr(e.sp,e.x,e.y,1,1,true,false)
+			pal()
+		end
+	end
+end
+
+
+
+//end axolotl
+//❎❎❎❎❎
+//❎❎❎❎❎
+-->8
+//6: misc
+//❎❎❎❎❎❎
+//❎❎❎❎❎❎
+
+function dialog(l1, l2, l3)
+    camera()
+    rrectfill(14, 88, 100, 22, 3, 0)
+    rrect(14, 88, 100, 22, 3, 7)
+    if l1 then print(l1, 19, 93, 7) end
+    if l2 then print(l2, 19, 100, 7) end
+    if l3 then print(l3, 19, 107, 7) end
+    camera(cam_x, cam_y)
+end
+
+function points(sp, x, y, count, total)
+    camera()
+    spr(sp, x, y)
+    print(count.."/"..total, x+9, y+3, 7)
+    camera(cam_x, cam_y)
+end
+
+function flash_sprite(obj, palone, paltwo, speed)
+	if obj.flash_timer < speed then
+		obj.flash_timer += 1
+	else
+		if obj.flash_timer % 2 == 0 then
+			pal(palone,paltwo)
+		end
+		obj.flash_timer = 0
+	end
+
+
+end
+
+//function flash_bomb()
+	
+//	spr(bomb.sp,player.x,player.y,1,1) // explosion
+//	flash_sprite(bomb,50,51,2)
+//	bomb.timer -= 1
+//end
+
+//find object position
+
+function collide_map(obj,aim,flag)
+	--ojb= table, needs x,y,w,h
+	
+	local x=obj.x local y=obj.y
+	local w=obj.w local h=obj.h
+		
+	local x1=0 local y1=0
+	local x2=0 local y2=0
+		
+	if aim=="left" then
+		x1=x-1	y1=y
+		x2=x	y2=y+h-1
+
+		elseif aim=="right" then
+			x1=x+w-1	y1=y
+			x2=x+w+1	y2=y+h-1
+			
+		elseif aim=="up" then
+			x1=x+1		y1=y-1
+			x2=x+w-2	y2=y
+		
+		elseif aim=="down" then
+			x1=x+1		y1=y+h
+			x2=x+w-2	y2=y+h
+		end	
+
+	//pixels to tiles
+	
+	x1/=8	y1/=8
+	x2/=8	y2/=8
+	
+	if fget(mget(x1,y1), flag)
+	or fget(mget(x1,y2), flag)
+	or fget(mget(x2,y1), flag)
+	or fget(mget(x2,y2), flag) then
+	
+		return true
+	else
+		return false
+	end	
+	
+end
+
+function on_tile_flag(obj, flag)
+	local tx=flr((obj.x+obj.w/2)/8)
+	local ty=flr((obj.y+obj.h/2)/8)
+	return fget(mget(tx,ty),flag)
+end
+
+
+// player movement
+function update_player()
+
+player.dx*=player.friction
+player.dy*=player.friction
+player.x+=player.dx
+player.y+=player.dy
+
+
+//check collision
+
+if collide_map(player,"down",0) then
+	player.dy-=player.acc
+	elseif collide_map(player,"up",0) then
+	player.dy+=player.acc
+	elseif collide_map(player,"left",0) then
+	player.dx+=player.acc
+	elseif collide_map(player,"right",0) then
+	player.dx-=player.acc
+end
+
+
+
+//MOVEMENT
+
+if btn(➡️) and
+btn(⬆️) then
+	player.dy-=player.acc/2
+	player.dx+=player.acc/2
+	player.sp=18
+	player.fx=false
+elseif btn(➡️)
+and btn(⬇️) then
+	player.dy+=player.acc/2
+	player.dx+=player.acc/2
+	player.sp=19
+	player.fx=true
+elseif btn(⬇️) and
+btn(⬅️) then
+	player.dy+=player.acc/2
+	player.dx-=player.acc/2
+	player.sp=19
+	player.fx=false
+elseif btn(⬆️) and
+btn(⬅️) then
+	player.dy-=player.acc/2
+	player.dx-=player.acc/2
+	player.sp=18
+	player.fx=true
+elseif btn(➡️) then
+  player.dx+=player.acc
+  player.moving=true
+  player.fx=true
+  player.sp=1
+elseif btn(⬇️) then
+  player.dy+=player.acc
+  player.moving=true
+  player.sp=3
+  player.fy=false
+elseif btn(⬅️) then
+	player.dx-=player.acc
+	player.moving=true
+	player.fx=false
+	player.sp=1
+elseif btn(⬆️) then
+	player.dy-=player.acc
+	player.moving=true
+	player.sp=2
+	player.fy=false
+end
+
+//drifting
+if player.moving
+and not btn(0)
+and not btn(1)
+and not btn(2)
+and not btn(3) then
+	player.moving=false
+	player.drifting=true
+end
+
+//if player.drifting then
+//	player.acc-=.2
+//	if abs(player.dx)<.05 and
+//	abs(player.dy)<.05 then
+//		player.dx=0
+//		player.dy=0
+//		player.drifting=false
+//	end
+//end
+
+if on_tile_flag(player,1) then
+		player.friction=0.75
+		player.max_dy=0.75
+		player.max_dy=0.75
+		player.acc=0.75
+	elseif on_tile_flag(player,2) then
+		player.friction=0.8
+		player.max_dy=0.8
+		player.max_dx=0.8
+		player.acc=0.8
+	else
+		player.friction=defaults.friction
+		player.max_dy=defaults.max_dy
+		player.max_dx=defaults.max_dx
+		player.acc=defaults.acc
+
+	end
+
+end
+
+
+function check_collision(obj)
+	return
+		player.x < obj.x + obj.w and
+		player.x + 8 > obj.x and
+		player.y < obj.y + obj.h and
+		player.y + 8 > obj.y
+	end
+	
+	//BULLET FIRE
+	function bullet_fire()
+		if btnp(5) and bullet_cooldown==0 then
+			sfx(1,2)
+			player.pow-=5
+			bullet_cooldown=10
+			local new_bullet = {
+				x = player.x,
+				y = player.y,
+				sp = 16,
+				pow = player.pow/5
+				}
+
+		if player.sp==18 and player.fx then
+			new_bullet.dx = -bul.speed/2
+			new_bullet.dy = -bul.speed/2
+		elseif player.sp==18 and not player.fx then
+			new_bullet.dx = bul.speed/2
+			new_bullet.dy = -bul.speed/2
+		elseif player.sp==19 and player.fx then
+			new_bullet.dx = bul.speed/2
+			new_bullet.dy = bul.speed/2
+		elseif player.sp==19 and not player.fx then
+			new_bullet.dx = -bul.speed/2
+			new_bullet.dy = bul.speed/2
+		elseif player.sp==1 and player.fx then
+			new_bullet.dx = bul.speed
+			new_bullet.dy = 0
+		elseif player.sp==1 and not player.fx then
+			new_bullet.dx = -bul.speed
+			new_bullet.dy = 0
+		elseif player.sp==2 then
+			new_bullet.dx = 0
+			new_bullet.dy = -bul.speed
+		elseif player.sp==3 then
+			new_bullet.dx = 0
+			new_bullet.dy = bul.speed			
+		end
+			new_bullet.dx += player.dx
+			new_bullet.dy += player.dy
+			add(bullets, new_bullet)
+		end
+	end
+		
+	function update_bullets()
+		for b in all(bullets) do
+			b.x += b.dx
+			b.y += b.dy
+				
+		if b.x < player.x-128
+			or b.x > player.x+128
+			or b.y < player.y-128
+			or b.y > player.y+128
+			or b.x < 0 or b.x > 1006
+			or b.y < 0 or b.y > 503 then
+				del(bullets,b)
+		end
+	
+	end
+		
+end
+
+//COLLISION WITH ENEMY 
+function bad_col()
+	for e in all(enemies) do
+		if e.spawn 
+		and e.alive
+		and not death then
+	
+			if check_collision(e)
+			and hit_cooldown == 0 then
+			
+			flash_sprite(e,e.palone, e.paltwo, 10)
+			
+			health -= e.dam
+			e.health -= player.dam/10
+			
+			e.flash_timer = 20
+			
+			sfx(e.hurtsfx, 2)
+			
+			hit_cooldown = 10
+			
+			if player.x > e.x then
+				player.x=player.oldx+5
+			else player.x=player.oldx-5
+			
+			end
+		
+			if player.y > e.y then 
+				player.y=player.oldy+5
+			else player.y=player.oldy-5
+		
+			end
+			end
+		end
+	end
+end
+
+function bullhit()
+
+	for e in all(enemies) do
+
+		for b in all(bullets) do
+	
+			if b.x < e.x + 8 and
+				b.x + 8 > e.x and
+				b.y < e.y + 8 and
+				b.y + 8 > e.y then
+			
+				e.health -= b.pow
+				e.flash_timer = 20
+			
+				sfx(3,3)
+			
+				del(bullets,b)
+			end
+		end
+			
+	end
+end
+	
+//end misc
+//❎❎❎❎❎❎
+//❎❎❎❎❎❎❎
 __gfx__
 0000000000000e00000ee000000ee00000000000000000003333333333333333888888888888888833333333b333333300900000000000908880008000808880
 000000000000ee00000ee000000ee0000000666666600000333cccccccccc333888000000000088833b333333333b33309009990909990090808080808080808
@@ -511,30 +775,30 @@ __gfx__
 0000000000eee000eeeeeeee00eeee000066ee666ee666603c66666ccc666cc380589850899880083b3367776337333300900088088000900808080808080808
 00000000000e0000000ee000000ee00000666e666e6666603c67a76cc6a7a6c38058988008998508333644444566633309009088088090090808080808080808
 0000000000000000000000000000000006666666666666603c6a766cc67a76c38089a985089a8508335544544554553309009088088090090808008008080808
-000000005556555400000000000000000666eeeeeee666003c676666c6a7a6c38089aa9808899508335444444455455300909088088090900000000000000000
-000000005555555400000000000000000066eeeeeee666003c6a67a6666a666380588aa855505558355444454545445309009080080090090000000000000000
-00e00e00555655540000000000000000000666eeee66666036676a767a6667a38556899560865608354454444445545500009000000090000000000000000000
-000ee0005555555400000000000000000000666666666660376a67a6a6666a738650560508885068354444544544554500900088088000900000000000000000
-000ee000555655540000000000000000000000666666666036666a76767a67638555506568898658544544444444453300909088088090900000000000000000
-00e00e005555555400000000000000000000000666666666337a67a6a6a7663388065605089a5588544444445444455309009000000090090000000000000000
-00000000555655540000000000000000000000000666666633376a76767a63338880506565605888544444544444545309009990909990090000000000000000
-00000000555555540000000000000000000000000000000033333333333333338888888888888888444545445545444500900000000000900000000000000000
+00e00e005556555400000000000000000666eeeeeee666003c676666c6a7a6c38089aa9808899508335444444455455300909088088090900000000000000000
+00088000555555540ee0eee00ee0eee00066eeeeeee666003c6a67a6666a666380588aa855505558355444454545445309009080080090090000000000000000
+e089980e555655540eee8ee00eeccce0000666eeee66666036676a767a6667a38556899560865608354454444445545500009000000090000000000000000000
+0897a9805555555400eee8e000eecce00000666666666660376a67a6a6666a738650560508885068354444544544554500900088088000900000000000000000
+089a79805556555400eeee0000eeec00000000666666666036666a76767a67638555506568898658544544444444453300909088088090900000000000000000
+e089980e55555554000eeee0000eeee00000000666666666337a67a6a6a7663388065605089a5588544444445444455309009000000090090000000000000000
+000880005556555400000ee000000ee0000000000666666633376a76767a63338880506565605888544444544444545309009990909990090000000000000000
+00e00e00555555540000000000000000000000000000000033333333333333338888888888888888444545445545444500900000000000900000000000000000
 555555555556555400a00a0000000000808008080000000000000000acc00ccabbbbbbbbcccccccc11111111333333334444444455555555ffffffff66566666
-55555555555555540a8aa8a0000000000898898000000000000000000cccccc0bbbbbabbcc7ccccc11111c113b333b334444444455555555fffff9ff66666656
-5555555555655554aaa88aaa00000000898668980000000000000000009cc900bbbbbbbbcccccccc1c111111333b33334434444355555545ffffffff66566666
+55555555555555540a8aa8a0000000000898898000000000000000000cccccc0bbbbbabbccbccccc111111113b333b334444444455555555fffff9ff66666656
+5555555555655554aaa88aaa00000000898668980000000000000000009cc900bbbbbbbbcccccccc11111111333b33334434444355555545ffffffff66566666
 6565656565555554aaaaaaaa0000000008666680000000000000000000cccc00bebbbbbbccccc7cc11111111333333334444444454555555ff9fffff66566656
-5555555555555544a0aaaa0a0000000080899808000000000000000000c99c00bbbbbbbbcccccccc111111c13b3333b34444444455555555ffffff9f66666656
-5555555555555444a0aaaa0a00000000000880000000000000000000ccccccccbbbbbbbbcc7ccccc11c11111333333334444344455554555ffffffff66566666
-5555555555554444009aa90000000000088888800000000000000000c0cccc0cbbbbbb8bcccccccc111111113333b3334344444455555555fff9ffff66666656
-4444444444444444099009900000000000888800000000000000000000c00c00bbbbbbbbcccccccc11111c11333333334444444455555555ffffffff66666656
-00000000000000000e0000e000e00e0000000000000000000000000000000000bbbbbbbbcccccccc00000000000000000000000000000000cac88ccc00000000
-0000000000000000e880088e0008800000000000000000000000000000000000bbbbbabbcc7ccccc00000000000000000000000000000000cccaaccc00000000
-000000000000000008899880e089980e00000000000000000000000000000000bbbbbbbbcccccccc00000000000000000000000000000000cc8888cc00000000
-0000000000000000009a79000897a98000000000000000000000000000000000bebbbbbbccccc7cc00000000000000000000000000000000ac8888ca00000000
-00000000000000000097a900089a798000000000000000000000000000000000bbbb8bbbcccccccc00000000000000000000000000000000cf8778fc00000000
-000000000000000008899880e089980e00000000000000000000000000000000bbbbbbbbcc7ccccc00000000000000000000000000000000ff8888ff00000000
-0000000000000000e880088e0008800000000000000000000000000000000000bbbbbb8bccccc7cc00000000000000000000000000000000f388883f00000000
-00000000000000000e0000e000e00e0000000000000000000000000000000000bbbbbbbbcccccccc000000000000000000000000000000003333333300000000
+5555555555555544a0aaaa0a0000000080899808000000000000000000c99c00bbbbbbbbcccccccc11c111113b3333b34444444455555555ffffff9f66666656
+5555555555555444a0aaaa0a00000000000880000000000000000000ccccccccbbbbbbbbcc7ccccc11111131333333334444344455554555ffffffff66566666
+5555555555554444009aa90000000000088888800000000000000000c0cccc0cbbbbbb8bcccccacc111111113333b3334344444455555555fff9ffff66666656
+4444444444444444099009900000000000888800000000000000000000c00c00bbbbbbbbcccccccc11111111333333334444444455555555ffffffff66666656
+00000000000000000e0000e000e00e00cccccccc000000000000000000000000bbbbbbbbcccccccc11111111000000000000000000000000cac88ccc00000000
+0000000000000000e880088e00088000cc8ccccc000000000000000000000000bbbbbabbcc7ccccc11111c11000000000000000000000000cccaaccc00000000
+00e00e000000000008899880e089980ecccccccc000000000000000000000000bbbbbbbbcccccccc11111111000000000000000000000000cc8888cc00000000
+000ee00000000000009a79000897a980ccccc7cc000000000000000000000000bebbbbbbcccccccc11111111000000000000000000000000ac8888ca00000000
+000ee000000000000097a900089a7980cccccccc000000000000000000000000bbbb8bbbccccc7cc11111111000000000000000000000000cf8778fc00000000
+00e00e000000000008899880e089980ecc7ccccc000000000000000000000000bbbbbbbbcccccccc11c11111000000000000000000000000ff8888ff00000000
+0000000000000000e880088e00088000cccccacc000000000000000000000000bbbbbb8bcccccccc11111111000000000000000000000000f388883f00000000
+00000000000000000e0000e000e00e00cccccccc000000000000000000000000bbbbbbbbcccccccc111111110000000000000000000000003333333300000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -567,9 +831,9 @@ __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+a2a2a2a2a2a2a2a3a2a2a2a2a2a2a2a2a2a2a2a2a2a3a3a3a2a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2
 a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2
-a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2
-a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2
+a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2
 a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2
 a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2
 a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2
@@ -762,41 +1026,41 @@ eee1111c1111111c1111111c1111111c1111111c1111111c1111111c1111111c11ee111c1111111c
 111c1111111c1111111c1111111c1111111c1111111c1111111c1111111c1111111c1111111c1111111c1111111c1111111c1111111c1111111c1111111c1111
 
 __gff__
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000020200000000000000040400000000020200000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000004000000000000000000000000000000000000000000000000020400000000000000040412000000000204000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __map__
-2b2b2b2b2b2b2b2b28282e112e2929392a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2b0a0b2b2b2b2b2b282e2e112e292929392a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2b1a1b2b2b2b2b282e2e2e112e2e292929392a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2b2b2b2b2b2b2b28282e2e112e2e2e2929392a2a2a2a2a2a2a2a2a2929292a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2b2b2b2b2b2b2b2b28282e112e2e2e2929392a2a2a2a2a2a2a2a29292e2929292a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2b282828282b2b2b28282e112e2e2e2929392a2a2a2a2a2a2a29292e2e2e2e292a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-28282e2e28282b28282e2e112e2e2e2929392a2a2a2a2a2929292e3838382e292a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-282e2e2e2e2828282e2e2e112e2e2e2929392a2a2a2a2a293e2e3838382e29292a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2e2e2e2e2e2e2e2e2e2e2e112e2e2e2929392a2a2a2a2a292e2e38382b2e2e292a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2020202020202020202020212e2e2e2929392a2a2a2a2a29292e2e292e2e29292a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2929392a2a2a2a2a2a292929292929292a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-292929292e2e2e2e29292e2e2e2e2e29392a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-29292929292e2e2929292929292e2e392a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-29293939292929393939393939392e392a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a392929392a2a2a2a2a2a393e2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a2a39392a2a2a2a2a2a2a2a292a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
-2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2b2b2b2b2b2b2b2b28282e112e2929392a2a2a3a3a3a3a2a2a2a2a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a3a3a3a2a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2b0a0b2b2b2b2b2b282e2e112e292929392a2a3a2a3a3a2a2a2a2a2a3a3a3a3a3a3a2a2a3a3a3a3a3a3a3a3a3a2a3a3a2a3a3a3a3a3a3a3a3a3a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2b1a1b2b2b2b2b282e2e2e112e2e292929392a2a2a2a3a3a2a2a2a2a2a2a2a2a2a2a2a3a3a2a2a2a2a3a3a3a2a2a2a3a2a3a3a2a2a2a2a2a2a2a2a2a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2b2b2b2b2b2b2b28282e2e112e2e2e2929392a3a3a3a3a3a2a2a2a2929292a2a2a3a3a3a2a2a2a2a3a2a2a2a3a2a2a3a3a3a3a3a2a2a2a2a3a3a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2b2b2b2b2b2b2b2b28282e112e2e2e2929392a2a2a2a2a2a2a2a29292e2929292a3a3a2a2a2a3a3a2a2a2a2a3a2a3a2a3a3a2a3a3a3a3a3a2a3a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2b282828282b2b2b28282e112e2e2e2929392a2a2a3a2a2a2a29292e2e2e2e292a2a3a2a3a3a3a2a3a2a3a2a3a3a3a3a2a3a2a3a3a2a3a3a3a2a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+28282e2e28282b28282e2e112e2e2e2929392a3a3a3a2a2929292e3838382e292a2a3a3a2a2a2a3a2a2a2a3a3a3a2a3a3a3a2a2a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+282e2e2e2e2828282e2e2e112e2e2e2929392a3a2a2a2a293e2e3838382e29292a2a2a2a2a2a2a2a3a3a3a3a3a3a2a3a3a3a3a3a3a2a2a2a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2e2e2e2e2e2e2e2e2e2e2e112e2e2e2929392a2a2a2a2a292e2e38382b2e2e292a2a3a3a2a3a3a3a2a2a2a2a3a3a3a2a2a3a2a2a3a3a2a2a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2020202020202020202020212e2e2e2929392a3a3a3a3a29292e2e292e2e29292a2a2a2a2a2a2a2a3a3a3a3a2a2a3a3a3a3a3a2a2a3a3a2a2a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2929392a2a2a2a2a2a292929292929292a2a3a3a3a2a2a2a2a3a2a2a3a3a3a3a3a2a3a3a3a2a2a3a3a2a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+292929292e2e2e2e29292e2e2e2e2e29392a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a3a3a2a2a2a2a2a3a2a2a2a3a2a2a2a3a3a3a2a2a2a2a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+29292929292e2e2929292929292e2e392a2a3a3a3a3a3a3a2a2a2a3a2a2a2a2a3a3a2a2a2a3a3a3a3a2a2a3a3a3a3a3a3a3a2a2a3a3a2a3a2a3a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+29293939292929393939393939392e392a2a2a2a2a2a2a2a3a3a3a3a2a2a2a2a2a3a3a2a2a2a2a3a2a3a3a2a2a3a3a2a2a3a3a2a3a3a3a2a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2a2a2a2a392929392a2a2a2a2a2a393e2a2a2a3a3a3a2a2a2a2a2a2a2a3a3a3a2a2a3a3a3a2a3a3a2a2a3a3a3a3a2a3a2a2a2a2a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2a2a2a2a2a39342a3a3a2a2a2a2a2a2a2a3a3a3a2a3a2a2a2a2a2a2a2a2a2a3a3a2a2a2a3a3a2a2a3a2a3a2a2a2a2a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2a3a2a2a2a2a2a2a3a3a3a3a2a2a2a2a2a2a2a2a2a2a3a3a3a3a3a3a3a2a2a2a3a3a3a2a2a2a3a3a3a2a3a3a2a3a2a3a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2a3a2a2a3a2a2a2a2a2a3a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a3a3a3a2a2a3a3a3a2a3a3a2a2a2a2a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+3a2a3a2a3a3a3a3a2a2a2a2a2a3a3a3a2a2a3a3a3a3a3a2a3a3a3a2a2a3a3a3a3a3a3a2a2a2a2a3a3a3a2a2a3a2a3a3a2a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+3a2a2a3a3a3a3a2a3a3a2a2a2a2a2a3a3a3a3a2a2a2a2a3a3a2a2a3a3a2a2a2a2a2a3a3a3a3a2a3a3a2a3a2a3a3a2a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+3a3a3a3a2a2a3a2a2a2a2a2a2a2a2a2a2a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a3a3a3a3a3a2a2a2a2a2a3a3a2a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+3a2a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a3a3a3a3a3a2a2a2a3a3a2a2a3a3a3a2a2a3a3a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2a2a2a3a2a3a3a2a2a2a2a2a2a3a3a3a3a3a3a2a3a3a2a2a3a2a2a3a3a2a3a3a2a2a3a3a3a3a3a2a2a3a2a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2a2a3a3a3a2a2a3a3a3a3a3a3a2a3a3a3a3a2a3a3a2a3a3a3a2a2a3a3a2a2a3a3a3a3a2a2a3a3a3a2a3a3a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2a2a3a3a2a2a2a2a3a3a2a2a3a3a3a2a2a3a3a2a2a2a2a2a3a3a3a3a2a3a3a2a3a2a2a3a3a3a3a3a3a3a2a2a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+3a2a2a3a3a2a2a2a2a2a2a2a2a2a2a3a3a3a3a2a2a3a3a3a3a3a2a3a2a3a3a3a3a3a3a3a3a2a3a3a3a3a2a3a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+3a2a2a2a2a3a3a3a3a3a3a3a2a2a2a3a2a2a3a3a3a2a2a3a3a3a3a3a2a2a3a2a3a3a3a3a2a3a2a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+3a3a2a3a3a3a3a3a2a2a2a3a3a3a3a3a2a3a3a3a3a2a3a2a3a3a2a2a2a3a2a2a3a2a2a3a3a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+3a3a3a3a2a3a3a3a3a3a3a2a3a2a2a2a2a2a3a2a2a3a3a3a2a3a3a3a3a3a3a2a2a2a2a3a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+3a2a2a2a3a3a2a3a3a2a3a3a3a3a3a3a3a3a3a2a3a3a2a3a2a2a2a2a3a3a3a3a3a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2a2a2a3a2a2a3a2a3a2a3a2a3a3a3a3a2a2a3a3a2a3a2a3a2a2a2a2a3a3a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
+2a2a3a3a2a2a2a3a3a2a2a2a2a2a2a3a3a2a2a2a2a3a3a2a2a2a3a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a
 __sfx__
 a0160020156101361012610136101461017610196101c6101d6101e6101d6101a61018610166101361013610146101561017610196101d6101f6102061021610216101f6101e6101b61019610176101661016610
 a40100002255023550235502355023550235502255021550205501f5501e5501c5501c5501b5501a5501a5501a5501a5501a5501a5501b5501c5501d5501e5501f5502055022550245502555026550285502a550

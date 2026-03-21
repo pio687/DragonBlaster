@@ -14,6 +14,10 @@ Explore a tile-based world map, discovering cities marked in white. When you app
 
 Building a vertical slice first - getting all core mechanics working with the home base, one city, and the Water Dragon kaiju before expanding to the full world map.
 
+## Learning Disclaimer
+
+This is the first Pico-8 game I've created, and I'm still very much in the learning process. Most of the core elements were copied from the first 15 videos in the SpaceCat Pico-8 Game Dev tutorial (found here: https://www.youtube.com/watch?v=LTMN5ItzzuA&list=PLavIQQGm3RCmPt93jcg4LEQTvoZRFf9l0). Pixel art and sounds done by me. I used Claude's Sonnet 4.6 model as a sort of "Senior Dev"-style mentor, helping me with my creative iterations and debugging. 
+
 ## Controls
 
 - **Arrow Keys** - Move ship (can move diagonally by holding two directions)
@@ -28,19 +32,19 @@ Building a vertical slice first - getting all core mechanics working with the ho
 - Basic movement in 8 directions
 - Water Dragon kaiju (animated/flashing)
 - City on map
-- Health bar display (100 HP - visual only)
+- Health bar display (100 HP)
 - Movement speed boost over water
 - Collision detection for sprite and map tile
 - Health loss
-- Enemy spawn when tile flown over
+- Enemy spawn when close
 - Camera scrolling
 - Health stops at zero
 - Change sprite upon player death
 - Starting sound, battle music, death music
 - Collision bounceback on enemy
 - Death sound
-- No collision during death state
-- Map wraps around
+- No collision during death state -- in progress
+- Map wraps around -- buggy
 - Fire bullets upon button press
 - Bullets delete when too far or off screen
 - Bullet collision with enemy
@@ -53,6 +57,7 @@ Building a vertical slice first - getting all core mechanics working with the ho
 - Enemy attack collision detection
 - Enemy death sprite
 - Powerup upon enemy death
+- enemy notifications
 
 ### Next up
 - Radius-based enemy spawn indicator (!!)
@@ -64,12 +69,12 @@ Building a vertical slice first - getting all core mechanics working with the ho
 ## Tentative Vertical Slice Goals (First Playable)
 
 ### Core Movement & Physics
-- [ ] Steady movement speed across land
-- [ ] Enhanced movement speed over water (with powerup)
-- [ ] Inertia system
+- [x] Steady movement speed across land
+- [x] Enhanced movement speed over water (with powerup)
+- [x] Inertia system
 - [ ] Shadow effects under ship
-- [ ] Smooth map scrolling
-- [ ] Wrap around map
+- [x] Smooth map scrolling
+- [/] Wrap around map
 
 ### Combat System
 - [ ] X button: Continuous shooting while held
