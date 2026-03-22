@@ -2,7 +2,7 @@
 Pico-8 Game
 # Dragon Blaster
 
-A Pico-8 city defense game where you pilot a flying ship from your mountain base, discovering cities across the world and defending them from massive kaiju bosses and their accompanying monsters.
+A Pico-8 city defense game where you pilot a flying ship from your mountain base, discovering cities across the world and defending them from kaiju bosses and their accompanying monsters.
 
 Current build found at https://pio687.github.io/DragonBlaster/dragon.html
 
@@ -51,19 +51,26 @@ This is the first Pico-8 game I've created, and I'm still very much in the learn
 - Enemy collision function
 - Flashing sprite with pallet swap
 - Enemy health, health loss, death
+- moving enemies
+- enemies drop pickups
+- health and power bars
+- enemy kill/total counter
+- spawn at center of map
+- center island
+- excess health->power
+- respawn at base
 
 ### In Development
-- Enemy shooting
+- Enemy shooting, prioritize player over city
+- enemies attack city (path finding?)
 - Enemy attack collision detection
-- Enemy death sprite
-- Powerup upon enemy death
 - enemy notifications
+- home base interactions
 
 ### Next up
-- Radius-based enemy spawn indicator (!!)
-- Enemy spawn warning (camera shake)
-- Powerup Pickup
-- Mountain lair
+
+- boss spawns
+- more enemy types
 
 
 ## Tentative Vertical Slice Goals (First Playable)
@@ -74,43 +81,36 @@ This is the first Pico-8 game I've created, and I'm still very much in the learn
 - [x] Inertia system
 - [ ] Shadow effects under ship
 - [x] Smooth map scrolling
-- [/] Wrap around map
+- [x] Wrap around map
 
 ### Combat System
 - [ ] X button: Continuous shooting while held
-- [ ] Projectiles fire forward direction
+- [x] Projectiles fire forward direction
 - [ ] Limited projectile range
-- [ ] Projectile speed (slower than ship, faster than kaiju)
 - [ ] City collision with player shots (can damage cities)
-- [ ] Collision detection (player, projectiles, kaiju, city)
+- [/] Collision detection (player, projectiles, kaiju, city)
 
 ### Shield & Health System
-- [ ] 200 shield points (separate from health)
-- [ ] 100 health points
-- [ ] Shield regeneration (automatic, 8 second delay after damage)
-- [ ] Health damage when shields depleted
-- [ ] Visual indicators for shield/health status
+- 250 max health
+- 250 max power
+- excess health goes to power
+- power determines bullet strength
 
 ### Kaiju (Water Dragon)
-- [ ] 100 health points
-- [ ] Triggered spawn
-- [ ] Mini health bar display
-- [ ] Movement pattern: stays in water, moves toward city
-- [ ] Attack cycle: 10 seconds movement → 5 seconds shooting → repeat
-- [ ] Roar sprite, sound, and earthquake effect before/after attacks
-- [ ] Shoots at city (can hit player if too close)
-- [ ] Multiple attack patterns
-- [ ] Uniform damage (no weak spots)
+- 100 health points
+- Triggered spawn
+- Mini health bar display
+- Movement pattern: stays in water, moves toward city
+- Attack cycle: 10 seconds movement → 5 seconds shooting → repeat
+- Roar sprite, sound, and earthquake effect before/after attacks
+- Shoots at city (can hit player if too close)
 
 ### City System
 - [ ] City states:
-  - White = Undiscovered
-  - Green = Discovered/Intact
-  - Orange = Damaged
+  - Green = Safe
   - Red = Destroyed
 - [ ] City takes damage from kaiju attacks and player crossfire
 - [ ] City health tracking
-- [ ] City repair after kaiju + surrounding monsters defeated
 - [ ] Bonus reward: Water speed boost (for defeating Water Dragon with city intact)
 
 ### Home Base (Mountain)
@@ -186,11 +186,3 @@ This is the first Pico-8 game I've created, and I'm still very much in the learn
 6. **Death** - Respawn at mountain, race back to continue fight
 7. **Progress** - Continue to next city with accumulated bonuses
 8. **Endgame** - Face final boss with all collected bonuses
-
-## Development Notes
-
-Built in Pico-8 as a learning project. This is my first game and I'm documenting the journey.
-
-## Screenshots
-
-Coming soon!
